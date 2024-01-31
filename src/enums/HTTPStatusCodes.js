@@ -6,3 +6,5 @@ const HTTPStatusCode = Object.freeze({
     NOTFOUND: 404,
     INTERNALSERVERERROR: 500,
 });
+
+module.exports = HTTPStatusCode;

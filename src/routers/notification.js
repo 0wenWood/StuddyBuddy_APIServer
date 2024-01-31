@@ -1,13 +1,22 @@
-const HTTPStatusCode = require('../enums/HTTPStatusCodes.js');
 const express = require('express');
+const HTTPStatusCode = require('../enums/HTTPStatusCodes');
+const NotificationTypeEnum = require('../enums/NotificationTypeEnum')
+const Notification = require('../models/notification');
+
 const router = express.Router();
 
-router.post('/notification', (req, res) => {
-    console.log(req.body);
-    res.status(201).send(req.body);
+router.post('/notification', async (req, res) => {
+    const notification = new Notification(req.body);
+
+    try {
+        await notification.save();
+        res.status(HTTPStatusCode.OKAY).send(notification);
+    } catch(e) {
+        res.status(HTTPStatusCode.BADREQUEST).send(e);
+    } 
 });
 
-app.get('/user/notification', (req, res) => {
+router.get('/user/notification', (req, res) => {
     // Go into database and get notifications from user
 
     const notifications = [ // Test Data
@@ -42,7 +51,7 @@ app.get('/user/notification', (req, res) => {
     res.status(HTTPStatusCode.OKAY).send(notifications);
 });
 
-app.post('/user/notifications', (req, res) => {
+router.post('/user/notifications', (req, res) => {
     const notification = req.body;
     if (notification.sender === undefined ||
         notification.sender === undefined ||
@@ -67,7 +76,7 @@ app.post('/user/notifications', (req, res) => {
     res.status(HTTPStatusCode.CREATED).send(notification);
 });
 
-app.delete('/user/notifications/:notificationId', (req, res) => {
+router.delete('/user/notifications/:notificationId', (req, res) => {
     const id = req.params.notificationId;
 
     if (id === undefined) {
@@ -93,7 +102,7 @@ app.delete('/user/notifications/:notificationId', (req, res) => {
     res.status(HTTPStatusCode.OKAY).send(notification);
 });
 
-app.delete('/user/notifications/all', (req, res) => {
+router.delete('/user/notifications/all', (req, res) => {
     // Go to database and get all notifications from this user.
     if (id === undefined) {
         req.status(HTTPStatusCode.NOTFOUND).send("Notification Not Found");
@@ -106,7 +115,7 @@ app.delete('/user/notifications/all', (req, res) => {
     res.status(HTTPStatusCode.OKAY).send([{title: "Hello"}, {title: "Hello"}, {title: "Hello"}]);
 });
 
-app.patch('/user/notifications', (req, res) => {
+router.patch('/user/notifications', (req, res) => {
     const id = req.body.notificationId;
     const isRead = req.body.isRead;
 
