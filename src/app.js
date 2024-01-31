@@ -1,18 +1,35 @@
-const express = require('express')
-const app = express()
+const HTTPStatusCode = require('./enums/HTTPStatusCodes.js');
+const NotificationTypeEnum = require('./enums/NotificationTypeEnum.js');
 
-// Set port to the PORT environment variable (if it is defined), 
-// otherwise set it to 3000
-const port = process.env.PORT || 3000
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const userRouter = require('./routers/user');
+const notificationRouter = require('./routers/notification.js');
+const groupsRouter = require('./routers/studyGroup');
 
-// Set up a default route ('') and return 'Hello World!' in the 
-// response when requests are received
-app.get('', (req, res) => {
-    res.send('Study Buddy!')
-})
+app.use(express.json());
+app.use(cors());
+app.use(userRouter);
+app.use(notificationRouter);
+app.use(groupsRouter);
+
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-All-Headers", 
+        "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('Hello World!')
+});
 
 // Configure the server to listen for connections on the port. 
 // Print to the console when ready for connections
 app.listen(port, () => {
-    console.log('Server is up on port ' + port)
+    console.log('Server is up on port ' + port);
 })
