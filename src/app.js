@@ -18,8 +18,7 @@ app.use(groupsRouter);
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-All-Headers", 
-        "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-All-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
 
