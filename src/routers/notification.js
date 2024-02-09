@@ -1,7 +1,7 @@
 const express = require('express');
-const HTTPStatusCode = require('../enums/HTTPStatusCodes');
-const NotificationTypeEnum = require('../enums/NotificationTypeEnum')
 const Notification = require('../models/notification');
+const auth = require('../middleware/auth');
+const HTTPStatusCode = require('../enums/HTTPStatusCodes');
 
 const router = express.Router();
 
@@ -10,90 +10,44 @@ router.post('/notification', async (req, res) => {
 
     try {
         await notification.save();
-        res.status(HTTPStatusCode.OKAY).send(notification);
+        res.status(HTTPStatusCode.CREATED).send(notification);
     } catch(e) {
         res.status(HTTPStatusCode.BADREQUEST).send(e);
     } 
 });
 
-router.get('/user/notification', (req, res) => {
-    // Go into database and get notifications from user
-
-    const notifications = [ // Test Data
-    {
-        id: "",
-        title: "Joined Study Group",
-        sender: "Owen Wood",
-        body: "",
-        isRead: false,
-        notificationType: "",
-        studyGroupId: ""
-    },
-    {
-        id: "",
-        title: "Delayed Study Group",
-        sender: "",
-        body: "",
-        isRead: false,
-        notificationType: "",
-        studyGroupId: ""
-    },
-    {
-        id: "",
-        title: "",
-        sender: "",
-        body: "",
-        isRead: false,
-        notificationType: "",
-        studyGroupId: ""
-    }];
+router.get('/user/notification', auth, async (req, res) => {
+    const user = req.user;
+    let notifications = [];
+    notifications.push(await Notification.find({'sender': user._id}));
+    notifications.push(await Notification.find({'reciever': user._id}));
 
     res.status(HTTPStatusCode.OKAY).send(notifications);
 });
 
-router.post('/user/notifications', (req, res) => {
-    const notification = req.body;
-    if (notification.sender === undefined ||
-        notification.sender === undefined ||
-        (notification.subject === undefined || 
-        notification.sender.length === 0) ||
-        (notification.body === undefined || 
-        notification.body.length === 0)) {
-            req.status(HTTPStatusCode.BADREQUEST)
-                .send("One or More invalid properties");
-    }
+router.post('/user/notification', auth, async (req, res) => {
+    const notification = new Notification(req.body);
 
-    if (notification.notificationType === undefined) {
-        notification.notificationType = NotificationTypeEnum.MessageNotificationType;
+    try {
+        await notification.save();
+        res.status(HTTPStatusCode.CREATED).send(notification);
+    } catch (e) {
+        res.status(HTTPStatusCode.BADREQUEST).send(e)
     }
-
-    if (notification.notificationType.idRequired && 
-        notification.studyGroupId === undefined) {
-            req.status(HTTPStatusCode.BADREQUEST)
-                .send("Notification Type Requires Study Group Id");
-    }
-
-    res.status(HTTPStatusCode.CREATED).send(notification);
 });
 
-router.delete('/user/notifications/:notificationId', (req, res) => {
+router.delete('/user/notification/:notificationId', auth, async (req, res) => {
     const id = req.params.notificationId;
+    const userId = req.user._id;
 
     if (id === undefined) {
-        req.status(HTTPStatusCode.BADREQUEST).send("Invalid Notification Id");
+        res.status(HTTPStatusCode.BADREQUEST).send("Invalid Notification Id");
     }
 
-    // Go into Database and find the notification by ID
-
-    const notification = {
-        id: id,
-        title: "Joined Study Group",
-        sender: "Owen Wood",
-        body: "",
-        isRead: false,
-        notificationType: "",
-        studyGroupId: ""
-    };
+    const notification = await Notification.findOneAndDelete({_id: id, $or: [{sender: userId}, {reciever: userId}]});
+    if (!notification) {
+        res.send(HTTPStatusCode.NOTFOUND).send("Notification Not Found");
+    }
 
     if (false) { // User should not be able to delete some notifications potentially.
         req.status(HTTPStatusCode.UNAUTHROIZED).send("User cannot delete this notification");
@@ -102,42 +56,34 @@ router.delete('/user/notifications/:notificationId', (req, res) => {
     res.status(HTTPStatusCode.OKAY).send(notification);
 });
 
-router.delete('/user/notifications/all', (req, res) => {
-    // Go to database and get all notifications from this user.
-    if (id === undefined) {
-        req.status(HTTPStatusCode.NOTFOUND).send("Notification Not Found");
-    }
+router.delete('/user/notifications/all', auth, async (req, res) => {
+    const userId = req.user._id;
+
+    const notifications = await Notification.deleteMany({$or: [{sender: userId}, {reciever: userId}]});
 
     if (false) { // User should not be able to delete some notifications potentially.
         req.status(HTTPStatusCode.UNAUTHROIZED).send("User cannot delete this notification");
     }
 
-    res.status(HTTPStatusCode.OKAY).send([{title: "Hello"}, {title: "Hello"}, {title: "Hello"}]);
+    res.status(HTTPStatusCode.OKAY).send(notifications);
 });
 
-router.patch('/user/notifications', (req, res) => {
+router.patch('/user/notifications', auth, async (req, res) => {
     const id = req.body.notificationId;
     const isRead = req.body.isRead;
+    const userId = req.user._id;
 
     if (id === undefined) {
         res.status(HTTPStatusCode.BADREQUEST).send("One or more Invalid Properties");
     }
 
-    if (isRead === undefined) {
+    if (isRead === undefined || isRead === null) {
         isRead = true;
     }
+    
+    const filter = {_id: id, $or: [{sender: userId}, {reciever: userId}]};
 
-    // Find Notification in Database
-    if (false) { // Not in Database
-        res.status(HTTPStatusCode.NOTFOUND).send("Notification Not Found");
-    }
-
-    // Save Edit on Notification in Database
-
-    const notification = {
-        id: id,
-        isRead: isRead
-    }
+    const notification = await Notification.findByIdAndUpdate(filter, { isRead: isRead });
 
     res.status(HTTPStatusCode.OKAY).send(notification);
 });

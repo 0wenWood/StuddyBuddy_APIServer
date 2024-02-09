@@ -3,7 +3,7 @@ const ObjectId = require('mongodb').ObjectId
 
 const Schema = mongoose.Schema;
 
-const studyGroupSchema = new Schema({
+const schema = new Schema({
     name: {
         type: String,
         required: true
@@ -31,6 +31,6 @@ const studyGroupSchema = new Schema({
     participants: [ObjectId]
 });
 
-const StudyGroup = mongoose.model('StudyGroup', studyGroupSchema);
+const StudyGroup = mongoose.model('StudyGroup', schema);
 
 module.exports = StudyGroup;

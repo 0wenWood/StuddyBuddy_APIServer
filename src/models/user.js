@@ -1,14 +1,23 @@
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
+const validator = require('validator');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const Schema = mongoose.Schema;
 
-const userSchema = new Schema({
+const schema = new Schema({
     email: {
         type: String,
         unique: true,
         required: true,
         trim: true,
-        lowercase: true
+        lowercase: true,
+        validate(val) {
+            if (!validator.isEmail(val)) {
+                throw new Error('Invalid Email');
+            }
+        }
     },
     username: {
         type: String,
@@ -31,9 +40,44 @@ const userSchema = new Schema({
     },
     majors: [String],
     tokens: [String],
+    friends: [ObjectId],
     profile_pic: Buffer
 });
 
-const User = mongoose.model('User', userSchema);
+schema.pre('save', async function(next) {
+    const user = this;
+
+    if (user.isModified('password')) {
+        user.password = await bcrypt.hash(user.password, 8);
+    }
+
+    next();
+});
+
+schema.methods.generateAuthToken = async function () {
+    const user = this;
+
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.JSON_TOKEN);
+
+    user.tokens.push(token);
+    await user.save();
+
+    return token;
+};
+
+schema.methods.toJSON = function() {
+    const user = this;
+
+    const userObj = user.toObject();
+
+    delete userObj.password;
+    delete userObj.tokens;
+    delete userObj.email_verification;
+    delete userObj.__v;
+
+    return userObj;
+};
+
+const User = mongoose.model('User', schema);
 
 module.exports = User;
