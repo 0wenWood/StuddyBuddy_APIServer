@@ -21,7 +21,7 @@ router.post('/user', async (req, res) => {
         res.status(HTTPStatusCode.CREATED).send(user);
     } catch (error) {
         console.error(error);
-        res.status(HTTPStatusCode.NOTFOUND).send(error);
+        res.status(HTTPStatusCode.NOTFOUND).send(user);
     }
 });
 
