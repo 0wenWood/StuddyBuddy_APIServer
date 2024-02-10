@@ -17,7 +17,7 @@ app.use(notificationRouter);
 app.use(groupsRouter);
 
 app.use(function(req, res, next) {
-    res.setHeader("Access-Control-Allow-Origin", "https://salmon-wave-0f89c260f.4.azurestaticapps.net/");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS,CONNECT,TRACE");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Content-Type-Options, Accept, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers");
     res.setHeader("Access-Control-Allow-Credentials", true);
