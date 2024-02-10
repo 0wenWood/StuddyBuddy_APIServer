@@ -12,7 +12,7 @@ router.post('/user', async (req, res) => {
     delete req.body.tokens;
     
     const user = new User(req.body);
-
+    
     try {
         await user.save();
         const token = await user.generateAuthToken();
