@@ -53,7 +53,8 @@ router.post('/user/login', async (req, res) => {
 
 router.post('/user/logout', async (req, res) => {
     try {
-        const user = await User.findOne({ "tokens": token });
+        const user = await User.findOne({ tokens: req.token });
+        console.log(user);
 
         if (!user) {
             res.send(HTTPStatusCode.BADREQUEST).send("Invalid Token");
