@@ -48,7 +48,7 @@ const sendVerificationEmail = async (toEmail, firstName, token) => {
                         padding: 5px;
                     }
                     
-                    div a {
+                    .button {
                         background-color: #525B88;
                         border: 1px solid #525B88;
                         color: white;
@@ -59,7 +59,7 @@ const sendVerificationEmail = async (toEmail, firstName, token) => {
                         text-decoration: none;
                     }
 
-                    div a:hover {
+                    .button:hover {
                         scale: 1.02;
                     }
 
@@ -71,7 +71,7 @@ const sendVerificationEmail = async (toEmail, firstName, token) => {
                         <a href="https://salmon-wave-0f89c260f.4.azurestaticapps.net/index.html">StudyBuddy</a>,
                         you can safely delete this email.
                     </p>
-                    <div><a href="https://salmon-wave-0f89c260f.4.azurestaticapps.net/verify.html?token=${token}"> Click to Verify Email </a></div>
+                    <a class="button" href="https://salmon-wave-0f89c260f.4.azurestaticapps.net/verify.html?token=${token}"> Click to Verify Email </a>
                 </body>
         `
     }
