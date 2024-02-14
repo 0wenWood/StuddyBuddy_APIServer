@@ -51,7 +51,7 @@ const sendVerificationEmail = async (toEmail, firstName, token) => {
                     .button {
                         background-color: #525B88;
                         border: 1px solid #525B88;
-                        color: #FFFFFF;
+                        color: white;
                         display: inline-block;
                         font-size: 14;
                         padding: 12px 40px;
