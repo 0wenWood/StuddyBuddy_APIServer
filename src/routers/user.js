@@ -57,7 +57,7 @@ router.post('/user/logout', async (req, res) => {
         console.log(user);
 
         if (!user) {
-            res.send(HTTPStatusCode.BADREQUEST).send("Invalid Token");
+            res.send(HTTPStatusCode.UNAUTHROIZED).send("Invalid Token");
         }
 
         user.tokens = user.tokens.filter((token) => token !== req.token);
