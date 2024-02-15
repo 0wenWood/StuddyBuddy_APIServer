@@ -42,8 +42,8 @@ router.post('/user/login', async (req, res) => {
 
         if (user.email_verification === true) {
             const token = await user.generateAuthToken();
-
-            res.status(HTTPStatusCode.OKAY).send({ user, token });
+            const okay = true;
+            res.status(HTTPStatusCode.OKAY).send({ user, token, okay });
         }
     } catch (e) {
         console.log(e);
@@ -51,15 +51,10 @@ router.post('/user/login', async (req, res) => {
     }
 });
 
-router.post('/user/logout', async (req, res) => {
+router.patch('/user/logout', auth, async (req, res) => {
+    const user = req.user;
+    
     try {
-        const user = await User.findOne({ tokens: req.token });
-        console.log(user);
-
-        if (!user) {
-            res.send(HTTPStatusCode.UNAUTHROIZED).send("Invalid Token");
-        }
-
         user.tokens = user.tokens.filter((token) => token !== req.token);
         await user.save();
 
