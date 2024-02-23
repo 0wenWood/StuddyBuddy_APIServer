@@ -18,10 +18,9 @@ router.post('/user', async (req, res) => {
         const token = await user.generateAuthToken();
         
         sendVerificationEmail(user.email, user.username, token);
-        res.status(HTTPStatusCode.CREATED).send(user);
+        res.status(HTTPStatusCode.CREATED).send({ user: user, okay: true });
     } catch (error) {
-        console.error(error);
-        res.status(HTTPStatusCode.BADREQUEST).send(user);
+        res.status(HTTPStatusCode.BADREQUEST).send(error);
     }
 });
 

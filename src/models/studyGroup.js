@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectId
+const validator = require('validator')
 
 const Schema = mongoose.Schema;
 
@@ -8,10 +9,26 @@ const schema = new Schema({
         type: String,
         required: true
     },
-    owner: {
+    owner: { 
         type: ObjectId,
-        required: true
+        ref: 'User', 
+        required: true 
     },
+    meeting_times: [{
+        date: {
+            type: Date,
+            required: true,
+            validate(value) {
+                if (!validator.isISO8601(value.toJSON())) {
+                    throw new Error("Invalid Meeting Date");
+                } 
+            }
+        },
+        location: {
+            type: String,
+            required: true
+        }
+    }],
     is_public: {
         type: Boolean,
         default: true
@@ -20,16 +37,23 @@ const schema = new Schema({
         type: Number,
         default: 6
     },
-    start_date: Date,
-    end_date: Date,
-    meeting_days: [String],
-    meeting_time: [String],
     description: String,
-    location: String,
     school: String,
-    class_number: Number,
-    participants: [ObjectId]
+    course_number: String,
+    participants: [{
+        type: ObjectId,
+        ref: 'User'
+    }]
 });
+
+schema.methods.toJSON = function() {
+    const group = this;
+    const groupObj = group.toObject();
+    
+    delete groupObj.__v;
+
+    return groupObj;
+}
 
 const StudyGroup = mongoose.model('StudyGroup', schema);
 
