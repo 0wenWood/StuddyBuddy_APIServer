@@ -18,4 +18,9 @@ router.post('/studygroup', auth, async (req, res) => {
     }
 });
 
+router.get('/studygroup/all', async (req, res) => {
+    const studyGroups = await StudyGroup.find();
+    res.send(HTTPStatusCode.OKAY).send(studyGroups);
+})
+
 module.exports = router;
