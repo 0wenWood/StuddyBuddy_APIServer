@@ -12,7 +12,7 @@ router.post('/studygroup', auth, async (req, res) => {
 
     try {
         await studyGroup.save();
-        res.status(HTTPStatusCode.CREATED).send(studyGroup);
+        res.status(HTTPStatusCode.CREATED).send({ group: studyGroup, okay: true});
     } catch(e) {
         res.status(HTTPStatusCode.BADREQUEST).send(e);
     }
