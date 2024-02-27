@@ -27,6 +27,10 @@ const schema = new Schema({
         location: {
             type: String,
             required: true
+        },
+        isWeekly: {
+            type: Boolean,
+            required: true
         }
     }],
     is_public: {
