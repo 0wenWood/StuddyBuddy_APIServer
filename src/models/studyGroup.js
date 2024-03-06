@@ -14,22 +14,31 @@ const schema = new Schema({
         ref: 'User', 
         required: true 
     },
+    start_date: {
+        type: Date,
+        required: true,
+        validate(value) {
+            if (!validator.isISO8601(value.toJSON())) {
+                throw new Error("Invalid Meeting Date");
+            } 
+        }
+    },
+    end_date: {
+        type: Date,
+        required: true,
+        validate(value) {
+            if (!validator.isISO8601(value.toJSON())) {
+                throw new Error("Invalid Meeting Date");
+            } 
+        }
+    },
     meeting_times: [{
-        date: {
-            type: Date,
+        day: {
+            type: String,
             required: true,
-            validate(value) {
-                if (!validator.isISO8601(value.toJSON())) {
-                    throw new Error("Invalid Meeting Date");
-                } 
-            }
         },
         location: {
             type: String,
-            required: true
-        },
-        isWeekly: {
-            type: Boolean,
             required: true
         }
     }],
@@ -49,6 +58,8 @@ const schema = new Schema({
         ref: 'User'
     }]
 });
+
+schema.index({name: 'text', decription: 'text'});
 
 schema.methods.toJSON = function() {
     const group = this;
