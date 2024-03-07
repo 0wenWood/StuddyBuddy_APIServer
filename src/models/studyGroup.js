@@ -33,8 +33,8 @@ const schema = new Schema({
         }
     },
     meeting_times: [{
-        day: {
-            type: String,
+        dates: {
+            type: [Date],
             required: true,
         },
         location: {
