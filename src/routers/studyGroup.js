@@ -84,7 +84,7 @@ router.get('/studygroups', auth, async (req, res) => {
         const results = await StudyGroup.find(filter, projection, options);
         res.send(results);
     } catch (e) {
-        res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send({filter, options, e});
     }
 
 });
