@@ -40,6 +40,7 @@ router.get('/studygroups', auth, async (req, res) => {
         ]
     });
 
+    console.log(req.query);
     const now = new Date();
 
     if (req.query.hasOwnProperty('ongoing')) {
@@ -47,7 +48,7 @@ router.get('/studygroups', auth, async (req, res) => {
             filter.$and.push({ start_date: { $lte: now }});
             filter.$and.push({ end_date: { $gt: now }});
         } else {
-            filter.$and,push({ 
+            filter.$and.push({ 
                 $or: [
                     { start_date: { $gt: now }},
                     { end_date: { $lt: now }}
@@ -57,11 +58,13 @@ router.get('/studygroups', auth, async (req, res) => {
     }
 
     if (req.query.hasOwnProperty('search')) {
-        filter.$and.push({
-            $text: {
-                $search: req.query.search
-            }
-        });
+        if (req.query.search.length !== 0) {
+            filter.$and.push({
+                $text: {
+                    $search: req.query.search
+                }
+            });
+        }
     }
 
     const options = {};
@@ -84,7 +87,7 @@ router.get('/studygroups', auth, async (req, res) => {
         const results = await StudyGroup.find(filter, projection, options);
         res.send(results);
     } catch (e) {
-        res.status(HTTPStatusCode.INTERNALSERVERERROR).send({filter, options, e});
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
     }
 
 });
