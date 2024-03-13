@@ -2,11 +2,11 @@ const express = require('express');
 const HTTPStatusCode = require('../enums/HTTPStatusCodes');
 const auth = require('../middleware/auth');
 const StudyGroup = require('../models/studyGroup');
+const { default: mongoose } = require('mongoose');
 
 const router = express.Router();
 
 router.post('/studygroup', auth, async (req, res) => {
-    delete req.body.particpants
     delete req.body.owner
     const studyGroup = new StudyGroup({ ...req.body, owner: req.user._id });
     console.log(studyGroup);
@@ -40,20 +40,23 @@ router.get('/studygroups', auth, async (req, res) => {
         ]
     });
 
-    console.log(req.query);
-    const now = new Date();
-
     if (req.query.hasOwnProperty('ongoing')) {
-        if (req.query.ongoing.toLowerCase() === 'true') {
-            filter.$and.push({ start_date: { $lte: now }});
-            filter.$and.push({ end_date: { $gt: now }});
-        } else {
-            filter.$and.push({ 
-                $or: [
-                    { start_date: { $gt: now }},
-                    { end_date: { $lt: now }}
-                ]
-            });
+        const now = new Date();
+        switch (req.query.ongoing.toLowerCase()) {
+            case 'true':
+                filter.$and.push({ start_date: { $lte: now }});
+                filter.$and.push({ end_date: { $gt: now }});
+                break;
+            case 'false':
+                filter.$and.push({ 
+                    $or: [
+                        { start_date: { $gt: now }},
+                        { end_date: { $lt: now }}
+                    ]
+                });
+                break;
+            default:
+                break;
         }
     }
 
@@ -89,7 +92,58 @@ router.get('/studygroups', auth, async (req, res) => {
     } catch (e) {
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
     }
+});
 
+router.patch('/studygroup/:id', auth, async (req, res) => {
+    const user = req.user;
+    const id = req.params.id;
+    const mods = req.body;
+
+    let studygroup = undefined;
+
+    if (mongoose.isValidObjectId(id)) {
+        res.status(HTTPStatusCode.BADREQUEST).send("Invalid Studygroup Id");
+        return;
+    }
+
+    try {
+        studygroup = await StudyGroup.findById(id);
+
+        if (!studygroup.owner.equals(user._id)) {
+            throw new Error();
+        }
+
+    } catch (e) {
+        res.send(HTTPStatusCode.INTERNALSERVERERROR).send("Error Finding Studygroup");
+        return;
+    }
+
+    const props = Object.keys(mods);
+    const modifiable = [
+        "name",
+        "is_public",
+        "max_participants",
+        "start_date",
+        "end_date",
+        "meeting_times",
+        "description",
+        "school",
+        "course_number"
+    ];
+
+    if (!props.every((p) => modifiable.includes(p))) {
+        res.status(HTTPStatusCode.BADREQUEST).send("One or More Invalid Properties");
+        return;
+    }
+
+    try {
+        props.forEach((p) => studygroup[p] = mods[p]);
+        await studygroup.save();
+
+        res.send(studygroup);
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send("Error Saving Studygroup");
+    }
 });
 
 module.exports = router;
