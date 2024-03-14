@@ -95,12 +95,11 @@ router.get('/studygroups', auth, async (req, res) => {
 });
 
 router.get('/studygroups/owned', auth, async (req, res) => {
-    const user = req.user;
     try {
-        const studyGroups = StudyGroup.find({ owner: user._id });
+        const studyGroups = StudyGroup.find({ owner: req.user._id });
         res.send(studyGroups);
     } catch (e) {
-        res.status(HTTPStatusCode.INTERNALSERVERERROR).send("Error Finding Owned Groups");
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
         return;
     }
 });
