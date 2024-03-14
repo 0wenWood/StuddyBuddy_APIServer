@@ -2,7 +2,7 @@ const express = require('express');
 const HTTPStatusCode = require('../enums/HTTPStatusCodes');
 const auth = require('../middleware/auth');
 const StudyGroup = require('../models/studyGroup');
-const { default: mongoose } = require('mongoose');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -91,6 +91,17 @@ router.get('/studygroups', auth, async (req, res) => {
         res.send(results);
     } catch (e) {
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+    }
+});
+
+router.get('/studygroups/owned', auth, async (req, res) => {
+    const user = req.user;
+    try {
+        const studyGroups = StudyGroup.find({ owner: user._id });
+        res.send(studyGroups);
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send("Error Finding Owned Groups");
+        return;
     }
 });
 
