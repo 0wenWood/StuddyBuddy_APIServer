@@ -96,9 +96,11 @@ router.get('/studygroups', auth, async (req, res) => {
 
 router.get('/studygroups/owned', auth, async (req, res) => {
     try {
-        const studyGroups = StudyGroup.find({ owner: req.user._id });
+        console.log(req.user._id);
+        const studyGroups = await StudyGroup.find({ owner: req.user._id });
         res.send(studyGroups);
     } catch (e) {
+        console.log(e);
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
         return;
     }
