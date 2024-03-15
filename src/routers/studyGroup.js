@@ -96,11 +96,9 @@ router.get('/studygroups', auth, async (req, res) => {
 
 router.get('/studygroups/owned', auth, async (req, res) => {
     try {
-        console.log(req.user._id);
         const studyGroups = await StudyGroup.find({ owner: req.user._id });
         res.send(studyGroups);
     } catch (e) {
-        console.log(e);
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
         return;
     }
@@ -112,8 +110,8 @@ router.patch('/studygroup/:id', auth, async (req, res) => {
     const mods = req.body;
 
     let studygroup = undefined;
-
-    if (mongoose.isValidObjectId(id)) {
+    const test = new mongoose.Types.ObjectId(id);
+    if (test.toString() !== id) {
         res.status(HTTPStatusCode.BADREQUEST).send("Invalid Studygroup Id");
         return;
     }
@@ -154,6 +152,7 @@ router.patch('/studygroup/:id', auth, async (req, res) => {
 
         res.send(studygroup);
     } catch (e) {
+        console.log(e);
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send("Error Saving Studygroup");
     }
 });
