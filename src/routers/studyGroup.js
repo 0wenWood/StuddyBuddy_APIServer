@@ -33,12 +33,18 @@ router.get('/studygroups', auth, async (req, res) => {
         course_number: 1
     };
 
-    filter.$and.push({
-        $or: [
-            { is_public: true },
-            { owner: req.user._id }
-        ]
-    });
+    if (req.query.hasOwnProperty('owned')) {
+        if (req.query.owned) {
+            filter.$and.push({ owner: req.user._id });
+        } else {
+            filter.$and.push({
+                $or: [
+                    { is_public: true },
+                    { owner: req.user._id }
+                ]
+            });
+        }
+    }
 
     if (req.query.hasOwnProperty('ongoing')) {
         const now = new Date();
@@ -90,7 +96,7 @@ router.get('/studygroups', auth, async (req, res) => {
         const results = await StudyGroup.find(filter, projection, options);
         res.send(results);
     } catch (e) {
-        res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
     }
 });
 
@@ -99,6 +105,7 @@ router.get('/studygroups/owned', auth, async (req, res) => {
         const studyGroups = await StudyGroup.find({ owner: req.user._id });
         res.send(studyGroups);
     } catch (e) {
+        console.log(e);
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
         return;
     }

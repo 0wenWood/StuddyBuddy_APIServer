@@ -59,7 +59,7 @@ const schema = new Schema({
     }]
 });
 
-schema.index({name: 'text', description: 'text'});
+schema.index({name: 'text', description: 'text', course_number: 'text'});
 
 schema.methods.toJSON = function() {
     const group = this;
