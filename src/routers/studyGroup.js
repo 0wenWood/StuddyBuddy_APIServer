@@ -34,7 +34,7 @@ router.get('/studygroups', auth, async (req, res) => {
     };
 
     if (req.query.hasOwnProperty('owned')) {
-        if (req.query.owned) {
+        if (req.query.owned === 'true') {
             filter.$and.push({ owner: req.user._id });
         } else {
             filter.$and.push({
