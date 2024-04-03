@@ -3,11 +3,9 @@ const User = require('../models/user');
 const HTTPStatusCodes = require('../enums/HTTPStatusCodes');
 
 const auth = async (req, res, next) => {
-    console.log("Authorizing...");
     try {
         const token = req.header("Authorization").replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JSON_TOKEN);
-        console.log(decoded._id);
         const user = await User.findOne({ _id: decoded._id, tokens: token });
 
         if (!user) {
@@ -19,6 +17,7 @@ const auth = async (req, res, next) => {
         next();
 
     } catch (e) {
+        console.log(e);
         res.status(HTTPStatusCodes.UNAUTHROIZED).send({error: "Authentication Needed"});
     }
 }

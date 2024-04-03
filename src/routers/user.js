@@ -4,6 +4,7 @@ const User = require('../models/user');
 const auth = require('../middleware/auth.js');
 
 const { sendVerificationEmail } = require('../emails/account.js');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -24,10 +25,24 @@ router.post('/user', async (req, res) => {
     }
 });
 
+router.get('/user/:id', async (req, res) => {
+    const id = req.params.id;
+
+    if (!mongoose.isValidObjectId(id)) {
+        res.status(HTTPStatusCode.BADREQUEST).send();
+        return;
+    }
+
+    try {
+        const user = await User.findById(id);
+        res.status(HTTPStatusCode.OKAY).send({ name: user.username });
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+    }
+});
+
 router.get('/user/verification', auth, async (req, res) => {
     const user = req.user;
-    const token = req.token;
-    console.log(token);
 
     user.email_verification = true;
     await user.save();

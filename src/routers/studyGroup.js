@@ -19,6 +19,22 @@ router.post('/studygroup', auth, async (req, res) => {
     }
 });
 
+router.get('/studygroup/:id', async (req, res) => {
+    const id = req.params.id;
+
+    if (!mongoose.isValidObjectId(id)) {
+        res.status(HTTPStatusCode.BADREQUEST).send();
+        return;
+    }
+
+    try {
+        const studyGroup = await StudyGroup.findById(id);
+        res.status(HTTPStatusCode.OKAY).send({group: studyGroup});
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+    }
+});
+
 router.get('/studygroups', auth, async (req, res) => {
     const filter = { $and: [] };
     const projection = {
@@ -30,7 +46,9 @@ router.get('/studygroups', auth, async (req, res) => {
         end_date: 1,
         meeting_times: 1,
         school: 1,
-        course_number: 1
+        course_number: 1,
+        owner: 1,
+        participants: 1
     };
 
     if (req.query.hasOwnProperty('owned')) {
@@ -100,12 +118,12 @@ router.get('/studygroups', auth, async (req, res) => {
     }
 });
 
-router.get('/studygroups/owned', auth, async (req, res) => {
+router.get('/studygroups/particpants', auth, async (req, res) => {
+    const filter = { participants: req.user._id };
     try {
-        const studyGroups = await StudyGroup.find({ owner: req.user._id });
+        const studyGroups = await StudyGroup.find({ participants: req.user._id });
         res.send(studyGroups);
     } catch (e) {
-        console.log(e);
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
         return;
     }
@@ -148,6 +166,7 @@ router.patch('/studygroup/:id', auth, async (req, res) => {
         "course_number"
     ];
 
+
     if (!props.every((p) => modifiable.includes(p))) {
         res.status(HTTPStatusCode.BADREQUEST).send("One or More Invalid Properties");
         return;
@@ -156,11 +175,116 @@ router.patch('/studygroup/:id', auth, async (req, res) => {
     try {
         props.forEach((p) => studygroup[p] = mods[p]);
         await studygroup.save();
-
+        console.log(studygroup);
         res.send(studygroup);
     } catch (e) {
         console.log(e);
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send("Error Saving Studygroup");
+    }
+});
+
+router.patch('/studygroup/:id/action', auth, async (req, res) => {
+    const action = req.body.action;
+
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        res.statusCode(HTTPStatusCode.BADREQUEST).send("Invalid StudyGroup Id");
+        return;
+    }
+
+    let studyGroup = undefined;
+
+    try {
+        studyGroup = await StudyGroup.findById(req.params.id);
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
+        return;
+    }
+
+    switch(action) {
+        case "join": {
+            const user = req.user._id;
+
+            if (studyGroup.owner === user) {
+                res.status(HTTPStatusCode.UNAUTHROIZED).send("Owners cannot be participants");
+                return;
+            }
+
+            if (studyGroup.participants.includes(user)) {
+                res.status(HTTPStatusCode.UNAUTHROIZED).send("Already in Group");
+                return;
+            }
+
+            studyGroup.participants.push(user);
+            
+            try {
+                await studyGroup.save();
+                res.send(HTTPStatusCode.OKAY).send();
+                return;
+            } catch (e) {
+                res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+                return;
+            }
+        }
+
+        case "leave": {
+            const user = req.user._id;
+
+            if (studyGroup.owner === user) {
+                res.status(HTTPStatusCode.UNAUTHROIZED).send("Owner cannot leave study group");
+                return;
+            }
+
+            if (!studyGroup.participants.includes(user)) {
+                res.status(HTTPStatusCode.NOTFOUND).send("User is not a participant in this group");
+                return;
+            }
+
+            studyGroup.participants.splice(studyGroup.participants.findIndex((p) => p === user), 1);
+
+            try {
+                await studyGroup.save();
+                res.send(HTTPStatusCode.OKAY).send();
+                return;
+            } catch (e) {
+                res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+                return;
+            }
+        }
+        case "kick": {
+
+        }
+        default:
+            res.send(HTTPStatusCode.BADREQUEST).send("Unknown Action");
+            return;
+    }
+});
+
+router.delete('/studygroup/:id', auth, async (req, res) => {
+    const id = req.params.id;
+    if (!mongoose.isValidObjectId(id)) {
+        res.statusCode(HTTPStatusCode.BADREQUEST).send("Invalid StudyGroup Id");
+        return;
+    }
+
+    let studyGroup = undefined;
+
+    try {
+        studyGroup = await StudyGroup.findById(id);
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+        return;
+    }
+
+    if (req.user._id !== studyGroup.owner) {
+        res.status(HTTPStatusCode.UNAUTHROIZED).send("Only Owners can delete Study Groups");
+        return;
+    }
+
+    try {
+        await studyGroup.deleteOne();
+        res.status(HTTPStatusCode.OKAY).send();
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send("Failed to Delete Study Group");
     }
 });
 
