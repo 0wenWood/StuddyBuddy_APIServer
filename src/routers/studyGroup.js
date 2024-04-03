@@ -46,7 +46,7 @@ router.delete('/studygroup/:id', async (req, res) => {
     try {
         const studyGroup = await StudyGroup.findById(id);
         console.log(studyGroup);
-        await studyGroup.deleteOne();
+        await StudyGroup.deleteOne(studyGroup);
         res.status(HTTPStatusCode.OKAY);
     } catch (e) {
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
