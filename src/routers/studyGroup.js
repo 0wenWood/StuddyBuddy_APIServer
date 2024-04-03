@@ -35,6 +35,24 @@ router.get('/studygroup/:id', async (req, res) => {
     }
 });
 
+router.delete('/studygroup/:id', async (req, res) => {
+    const id = req.params.id;
+
+    if (!mongoose.isValidObjectId(id)) {
+        res.status(HTTPStatusCode.BADREQUEST).send();
+        return;
+    }
+
+    try {
+        const studyGroup = await StudyGroup.findById(id);
+        console.log(studyGroup);
+        await studyGroup.deleteOne();
+        res.status(HTTPStatusCode.OKAY);
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+    }
+});
+
 router.get('/studygroups', auth, async (req, res) => {
     const filter = { $and: [] };
     const projection = {
