@@ -41,6 +41,7 @@ const schema = new Schema({
     majors: [String],
     tokens: [String],
     friends: [ObjectId],
+    inbox: [ObjectId],
     profile_pic: Buffer
 });
 

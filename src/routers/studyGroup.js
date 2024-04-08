@@ -9,7 +9,6 @@ const router = express.Router();
 router.post('/studygroup', auth, async (req, res) => {
     delete req.body.owner
     const studyGroup = new StudyGroup({ ...req.body, owner: req.user._id });
-    console.log(studyGroup);
     try {
         await studyGroup.save();
         res.status(HTTPStatusCode.CREATED).send({ group: studyGroup, okay: true});
@@ -45,9 +44,8 @@ router.delete('/studygroup/:id', async (req, res) => {
 
     try {
         const studyGroup = await StudyGroup.findById(id);
-        console.log(studyGroup);
-        await StudyGroup.deleteOne(studyGroup);
-        res.status(HTTPStatusCode.OKAY);
+        const result = await StudyGroup.deleteOne(studyGroup);
+        res.status(HTTPStatusCode.OKAY).send(result);
     } catch (e) {
         res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
     }
@@ -142,8 +140,17 @@ router.get('/studygroups', auth, async (req, res) => {
     }
 });
 
+router.get('/studygroups/owned', auth, async (req, res) => {
+    try {
+        const studyGroups = await StudyGroup.find({ owner: req.user._id });
+        res.send(studyGroups);
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
+        return;
+    }
+});
+
 router.get('/studygroups/particpants', auth, async (req, res) => {
-    const filter = { participants: req.user._id };
     try {
         const studyGroups = await StudyGroup.find({ participants: req.user._id });
         res.send(studyGroups);
@@ -199,7 +206,6 @@ router.patch('/studygroup/:id', auth, async (req, res) => {
     try {
         props.forEach((p) => studygroup[p] = mods[p]);
         await studygroup.save();
-        console.log(studygroup);
         res.send(studygroup);
     } catch (e) {
         console.log(e);
@@ -275,7 +281,30 @@ router.patch('/studygroup/:id/action', auth, async (req, res) => {
             }
         }
         case "kick": {
+            const owner = req.user._id;
+            const userId = req.body.user;
 
+            console.log(studyGroup.owner.equals(owner))
+            if (!studyGroup.owner.equals(owner)) {
+                res.status(HTTPStatusCode.UNAUTHROIZED).send("Only Owners can remove others");
+                return;
+            }
+
+            if (!studyGroup.participants.includes(userId)) {
+                res.status(HTTPStatusCode.NOTFOUND).send("Deleted User Not Found");
+                return;
+            }
+
+            studyGroup.participants.splice(studyGroup.participants.findIndex((p) => p === userId), 1);
+
+            try {
+                await studyGroup.save();
+                res.status(HTTPStatusCode.OKAY).send();
+                return;
+            } catch (e) {
+                res.status(HTTPStatusCode.INTERNALSERVERERROR).send();
+                return;
+            }
         }
         default:
             res.send(HTTPStatusCode.BADREQUEST).send("Unknown Action");

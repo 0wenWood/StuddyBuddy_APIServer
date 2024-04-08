@@ -1,91 +1,44 @@
 const express = require('express');
 const Notification = require('../models/notification');
+const User = require('../models/user');
 const auth = require('../middleware/auth');
 const HTTPStatusCode = require('../enums/HTTPStatusCodes');
 
 const router = express.Router();
 
-router.post('/notification', async (req, res) => {
-    const notification = new Notification(req.body);
-
+router.post('/notification', auth, async (req, res) => {
+    console.log(req.body);
+    const notification = new Notification({...req.body, sender: req.user._id});
     try {
         await notification.save();
-        res.status(HTTPStatusCode.CREATED).send(notification);
-    } catch(e) {
-        res.status(HTTPStatusCode.BADREQUEST).send(e);
-    } 
-});
 
-router.get('/user/notification', auth, async (req, res) => {
-    const user = req.user;
-    let notifications = [];
-    notifications.push(await Notification.find({'sender': user._id}));
-    notifications.push(await Notification.find({'reciever': user._id}));
+        const sender = await User.findById(req.user._id);
+        sender.inbox.push(notification._id);
 
-    res.status(HTTPStatusCode.OKAY).send(notifications);
-});
-
-router.post('/user/notification', auth, async (req, res) => {
-    const notification = new Notification(req.body);
-
-    try {
-        await notification.save();
-        res.status(HTTPStatusCode.CREATED).send(notification);
+        const reciever = await User.findById(notification.reciever);
+        reciever.inbox.push(notification._id);
+        res.status(HTTPStatusCode.CREATED).send({ notification: notification, okay: true });
     } catch (e) {
-        res.status(HTTPStatusCode.BADREQUEST).send(e)
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
     }
 });
 
-router.delete('/user/notification/:notificationId', auth, async (req, res) => {
-    const id = req.params.notificationId;
-    const userId = req.user._id;
+router.get('/notifications', auth, async(req, res) => {
+    const filter = {
+        $and: [{
+            $or: [
+                { sender: req.user._id },
+                { reciever: req.user._id }
+            ]
+        }
+    ]};
 
-    if (id === undefined) {
-        res.status(HTTPStatusCode.BADREQUEST).send("Invalid Notification Id");
+    try {
+        const result = await Notification.find(filter);
+        res.send([...result]);
+    } catch (e) {
+        res.status(HTTPStatusCode.INTERNALSERVERERROR).send(e);
     }
-
-    const notification = await Notification.findOneAndDelete({_id: id, $or: [{sender: userId}, {reciever: userId}]});
-    if (!notification) {
-        res.send(HTTPStatusCode.NOTFOUND).send("Notification Not Found");
-    }
-
-    if (false) { // User should not be able to delete some notifications potentially.
-        req.status(HTTPStatusCode.UNAUTHROIZED).send("User cannot delete this notification");
-    }
-
-    res.status(HTTPStatusCode.OKAY).send(notification);
-});
-
-router.delete('/user/notifications/all', auth, async (req, res) => {
-    const userId = req.user._id;
-
-    const notifications = await Notification.deleteMany({$or: [{sender: userId}, {reciever: userId}]});
-
-    if (false) { // User should not be able to delete some notifications potentially.
-        req.status(HTTPStatusCode.UNAUTHROIZED).send("User cannot delete this notification");
-    }
-
-    res.status(HTTPStatusCode.OKAY).send(notifications);
-});
-
-router.patch('/user/notifications', auth, async (req, res) => {
-    const id = req.body.notificationId;
-    const isRead = req.body.isRead;
-    const userId = req.user._id;
-
-    if (id === undefined) {
-        res.status(HTTPStatusCode.BADREQUEST).send("One or more Invalid Properties");
-    }
-
-    if (isRead === undefined || isRead === null) {
-        isRead = true;
-    }
-    
-    const filter = {_id: id, $or: [{sender: userId}, {reciever: userId}]};
-
-    const notification = await Notification.findByIdAndUpdate(filter, { isRead: isRead });
-
-    res.status(HTTPStatusCode.OKAY).send(notification);
 });
 
 module.exports = router;
