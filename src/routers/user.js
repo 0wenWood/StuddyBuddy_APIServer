@@ -53,7 +53,6 @@ router.get('/user/verification', auth, async (req, res) => {
 router.post('/user/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password);
-
         if (user.email_verification === true) {
             const token = await user.generateAuthToken();
             const okay = true;
