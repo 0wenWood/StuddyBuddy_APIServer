@@ -196,8 +196,7 @@ router.patch('/studygroup/:id', auth, async (req, res) => {
         "school",
         "course_number"
     ];
-
-
+    
     if (!props.every((p) => modifiable.includes(p))) {
         res.status(HTTPStatusCode.BADREQUEST).send("One or More Invalid Properties");
         return;

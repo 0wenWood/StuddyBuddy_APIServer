@@ -38,6 +38,16 @@ const schema = new Schema({
         type: Boolean,
         default: false
     },
+    ig: {
+        username: {
+            type: String,
+            required: true
+        },
+        password: {
+            type: String,
+            required: true
+        }
+    },
     majors: [String],
     tokens: [String],
     friends: [ObjectId],
